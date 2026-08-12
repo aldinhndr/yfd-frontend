@@ -10,7 +10,7 @@ load_dotenv()
 
 app = FastAPI(title="Youth Fun Day API")
 
-FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://localhost:5178")
+FRONTEND_ORIGIN = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
 app.add_middleware(
     CORSMiddleware,
