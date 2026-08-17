@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -24,18 +24,33 @@ allowed_origins = [
 if frontend_clean and frontend_clean not in allowed_origins:
     allowed_origins.append(frontend_clean)
 
-# 2. Pasang CORSMiddleware
+# 1. Pasang Custom Middleware terlebih dahulu agar CORSMiddleware dieksekusi di LAPISAN TERLUAR
+app.add_middleware(AccessLogMiddleware)
+
+# 2. Pasang CORSMiddleware paling akhir agar menangani preflight request pertama kali
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],
+    max_age=86400,
 )
 
-# 3. Pasang Custom Middleware (Access Log)
-app.add_middleware(AccessLogMiddleware)
+# 3. Explicit Global OPTIONS Handler (Menjamin response preflight selalu 200 OK & pasang CORS)
+@app.options("/{full_path:path}")
+async def preflight_handler(request: Request, full_path: str):
+    response = Response()
+    origin = request.headers.get("origin")
+    
+    if origin in allowed_origins or "*" in allowed_origins:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = request.headers.get("access-control-request-headers", "*")
+        response.headers["Access-Control-Max-Age"] = "86400"
+    return response
 
 # 4. Register Routers
 app.include_router(pes.router)
