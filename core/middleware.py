@@ -16,11 +16,15 @@ class AccessLogMiddleware(BaseHTTPMiddleware):
     """Catat tiap request: siapa (IP), buka apa (path), berapa lama (ms), status berapa."""
 
     async def dispatch(self, request: Request, call_next):
+        # 1. JANGAN intercept / proses request OPTIONS (Preflight browser untuk CORS)
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         start = time.perf_counter()
         response = await call_next(request)
         duration_ms = int((time.perf_counter() - start) * 1000)
 
-        # Jangan blok response gara-gara logging gagal
+        # 2. Jangan blok response utama jika logging gagal
         try:
             supabase = get_supabase()
             supabase.table("access_logs").insert({
