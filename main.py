@@ -19,7 +19,7 @@ origins = [
     "https://youthfunday.belovesport.com",
     "http://localhost:3000",
     "http://localhost:5173",
-    "http://localhost:5178",
+    "http://localhost:5190",
 ]
 
 frontend_origin = os.getenv("FRONTEND_ORIGIN", "").rstrip("/")
